@@ -1,0 +1,4 @@
+Flask
+language-tool-python
+transformers
+torch
