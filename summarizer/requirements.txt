@@ -1,0 +1,4 @@
+#summarizer
+flask
+transformers
+summarizer_logic
