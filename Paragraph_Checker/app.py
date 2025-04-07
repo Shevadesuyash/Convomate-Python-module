@@ -6,9 +6,13 @@ app = Flask(__name__)
 @app.route('/correct_text', methods=['POST'])
 def correct_text():
     data = request.get_json()
-    text = data.get("text", "")
-    
+    text = data.get("paragraph", "")
+
+    print("test to correct  : ",text)
+
     corrected_text = correct_grammar(text)
+
+    print("test to correct  : ",corrected_text)
 
     return jsonify({
         "original_text": text,
@@ -16,4 +20,4 @@ def correct_text():
     })
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
