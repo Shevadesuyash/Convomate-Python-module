@@ -20,7 +20,3 @@ def summarize_text(text, format_type="paragraph"):
         return "\n".join(f"- {sentence.strip()}" for sentence in summary_sentences)
         
     return " ".join(summary_sentences)
-par = input()
-print()
-typ_for = input('enter type of summarize u want , write \'points\'  or \' paragraph\' ')
-summarize_text(par , typ_for)

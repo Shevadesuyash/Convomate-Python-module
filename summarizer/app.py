@@ -9,8 +9,14 @@ app = Flask(__name__)
 def summarize():
     data = request.get_json()
     text = data.get("text", "")
-    
-    summarized_text = summarize_text(text)
+    types = data.get("type","")
+
+    print (text)
+    print(types)
+
+    summarized_text = summarize_text(text,types)
+
+    print (summarized_text)
 
     return jsonify({
         "original_text": text,
@@ -18,4 +24,4 @@ def summarize():
     })
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True)
