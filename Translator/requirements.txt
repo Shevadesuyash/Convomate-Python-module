@@ -1,4 +1,2 @@
-Flask
-language-tool-python
-transformers
-torch
+flask
+googletrans==4.0.0-rc1
