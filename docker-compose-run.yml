@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  chatbot:
+    image: your-dockerhub-username/chatbot:latest
+    container_name: chatbot
+    ports:
+      - "5003:5003"
+    environment:
+      - FLASK_ENV=production
+    restart: always
+
+  paragraph-checker:
+    image: your-dockerhub-username/paragraph-checker:latest
+    container_name: paragraph-checker
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+    restart: always
+
+  summarizer:
+    image: your-dockerhub-username/summarizer:latest
+    container_name: summarizer
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=production
+    restart: always
+
+  translator:
+    image: your-dockerhub-username/translator:latest
+    container_name: translator
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    restart: always
