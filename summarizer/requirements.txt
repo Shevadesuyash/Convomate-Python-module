@@ -1,4 +1,3 @@
 #summarizer
-flask
-transformers
-summarizer_logic
+Flask
+nltk
