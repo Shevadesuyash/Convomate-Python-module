@@ -4,7 +4,7 @@ services:
   chatbot:
     build:
       context: ./Chatbot
-    image: your-dockerhub-username/chatbot:latest  # Replace with your Docker Hub username/repo
+#    image: your-dockerhub-username/chatbot:latest  # Replace with your Docker Hub username/repo
     ports:
       - "5003:5003"
     environment:
@@ -17,7 +17,7 @@ services:
   paragraph_checker:
     build:
       context: ./Paragraph_Checker
-    image: your-dockerhub-username/paragraph-checker:latest
+#    image: your-dockerhub-username/paragraph-checker:latest
     ports:
       - "5001:5001"
     environment:
@@ -30,7 +30,7 @@ services:
   summarizer:
     build:
       context: ./summarizer
-    image: your-dockerhub-username/summarizer:latest
+#    image: your-dockerhub-username/summarizer:latest
     # image: your-dockerhub-username/chatbot:latest  # Disable pushing for now
     ports:
       - "5002:5002"
@@ -44,7 +44,7 @@ services:
   translator:
     build:
       context: ./Translator
-    image: your-dockerhub-username/translator:latest
+#    image: your-dockerhub-username/translator:latest
     ports:
       - "5000:5000"
     environment:
