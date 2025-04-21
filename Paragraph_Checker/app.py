@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from grammar_logic import correct_grammar
+from paragraph_checker import correct_paragraph
 
 app = Flask(__name__)
 
@@ -8,16 +8,35 @@ def correct_text():
     data = request.get_json()
     text = data.get("paragraph", "")
 
-    print("test to correct  : ",text)
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
 
-    corrected_text = correct_grammar(text)
+    print("Original Text:", text)
 
-    print("test to correct  : ",corrected_text)
+    try:
+        # Get fully corrected text
+        fully_corrected = correct_paragraph(text)
 
-    return jsonify({
-        "original_text": text,
-        "grammar_corrected": corrected_text
-    })
+        return jsonify({
+            "original_text": text,
+            "corrected_text": fully_corrected
+        })
+
+    except Exception as e:
+        print(f"Error processing text: {str(e)}")
+        return jsonify({
+            "error": "An error occurred while processing the text",
+            "details": str(e)
+        }), 500
 
 if __name__ == '__main__':
+    # Initialize models at startup
+    from paragraph_checker import initialize_models
+    print("Loading ML models...")
+    try:
+        initialize_models()
+        print("Models loaded successfully")
+    except Exception as e:
+        print(f"Error loading models: {str(e)}")
+
     app.run(host="0.0.0.0", port=5001, debug=True)

@@ -1,27 +1,21 @@
-# Use a lightweight Python image
 FROM python:3.10-slim
 
-# Prevents Python from writing pyc files and buffering stdout/stderr
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Set the working directory
-WORKDIR /app
-
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    openjdk-11-jre-headless \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Copy app code
+# Set up application
+WORKDIR /app
 COPY . .
 
-# Expose port
-EXPOSE 5001
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Run app
+# Pre-download models during build
+RUN python -c "from paragraph_checker import initialize_models; initialize_models()"
+
+EXPOSE 5001
 CMD ["python", "app.py"]
