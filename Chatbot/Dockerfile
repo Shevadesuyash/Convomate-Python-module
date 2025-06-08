@@ -1,32 +1,28 @@
-# Start from a lightweight base image
 FROM python:3.10-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Set working directory
-WORKDIR /app
-
-# Install basic system dependencies (needed for torch)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libglib2.0-0 \
-    libsm6 \
-    libxrender1 \
-    libxext6 \
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies separately to leverage Docker caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Set up application directory
+WORKDIR /app
+COPY . .
 
-# Copy only needed source files
-COPY app.py .
-COPY grammar_chatbot.py .
+# Writable cache directory for Hugging Face & LanguageTool
+ENV TRANSFORMERS_CACHE=/app/cache
+ENV HF_HOME=/app/cache
+ENV LANGTOOL_HOME=/app/cache/langtool
 
-# Expose the port your Flask app runs on
-EXPOSE 5003
+RUN mkdir -p /app/cache && chmod -R 777 /app/cache
 
-# Run the Flask app
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Do NOT pre-download models during build to avoid /.cache issues
+# RUN python -c "from paragraph_checker import initialize_models; initialize_models()"
+
+EXPOSE 5001
 CMD ["python", "app.py"]
