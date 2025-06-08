@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  chatbot:
+    build:
+      context: ./Chatbot
+#    image: your-dockerhub-username/chatbot:latest  # Replace with your Docker Hub username/repo
+    ports:
+      - "5003:5003"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - ./Chatbot:/app
+    networks:
+      - app-network
+
+  paragraph_checker:
+    build:
+      context: ./Paragraph_Checker
+#    image: your-dockerhub-username/paragraph-checker:latest
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - ./Paragraph_Checker:/app
+    networks:
+      - app-network
+
+  summarizer:
+    build:
+      context: ./summarizer
+#    image: your-dockerhub-username/summarizer:latest
+    # image: your-dockerhub-username/chatbot:latest  # Disable pushing for now
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - ./summarizer:/app
+    networks:
+      - app-network
+
+  translator:
+    build:
+      context: ./Translator
+#    image: your-dockerhub-username/translator:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - ./Translator:/app
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+#
+## Tag the image (if not already done)
+#  docker tag chatbot:latest your-dockerhub-username/chatbot:latest
+#  docker tag paragraph-checker:latest your-dockerhub-username/paragraph-checker:latest
+#  docker tag summarizer:latest your-dockerhub-username/summarizer:latest
+#  docker tag translator:latest your-dockerhub-username/translator:latest
+#
+#  # Push the images
+#  docker push your-dockerhub-username/chatbot:latest
+#  docker push your-dockerhub-username/paragraph-checker:latest
+#  docker push your-dockerhub-username/summarizer:latest
+#  docker push your-dockerhub-username/translator:latest

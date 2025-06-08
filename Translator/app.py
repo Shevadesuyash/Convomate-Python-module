@@ -1,23 +1,44 @@
 from flask import Flask, request, jsonify
-from grammar_logic import correct_grammar, change_tense
+from translator_logic import detect_language, translate_text
 
 app = Flask(__name__)
 
-@app.route('/correct_text', methods=['POST'])
-def correct_text():
+@app.route('/translate', methods=['POST'])
+def translate():
+    # Log the incoming request payload
     data = request.get_json()
-    text = data.get("text", "")
-    target_tense = data.get("target_tense", "past")
+    print("Received request payload:", data)  # Debugging
 
-    corrected_text = correct_grammar(text)
-    tense_corrected_text = change_tense(corrected_text, target_tense)
+    from_language = data.get('from_language', 'auto')  # Default to 'auto' for automatic detection
+    to_language = data.get('to_language', 'en')  # Default to English
+    text_to_translate = data.get('text_to_translate', '')
 
-    return jsonify({
-        "original_text": text,
-        "grammar_corrected": corrected_text,
-        "tense_corrected": tense_corrected_text,
-        "target_tense": target_tense
-    })
+    if not text_to_translate:
+        print("Error: No text provided for translation")  # Debugging
+        return jsonify({"error": "No text provided for translation"}), 400
+
+    # Log the translation parameters
+    print(f"Translating from {from_language} to {to_language}: {text_to_translate}")  # Debugging
+
+    # Perform translation
+    translated_text, pronunciation = translate_text(from_language, to_language, text_to_translate)
+
+    if translated_text is None:
+        print("Translation error:", pronunciation)  # Debugging
+        return jsonify({"error": pronunciation}), 500
+
+    # Prepare the response
+    response = {
+        'translatedText': translated_text,
+        'pronunciation': pronunciation,  # Include pronunciation in the response
+        'fromLanguage': from_language,
+        'toLanguage': to_language
+    }
+
+    # Log the outgoing response
+    print("Sending response:", response)  # Debugging
+
+    return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

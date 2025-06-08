@@ -1,2 +1,6 @@
 flask
+language-tool-python
 transformers
+torch
+sentencepiece
+protobuf
