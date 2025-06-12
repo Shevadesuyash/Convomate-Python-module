@@ -3,17 +3,23 @@ FROM python:3.9-slim as builder
 
 WORKDIR /app
 
-# Install system dependencies with OpenJDK 17 (available in Debian)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     openjdk-17-jre-headless \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Pre-download and install LanguageTool
+RUN mkdir -p /app/languagetool && \
+    wget https://languagetool.org/download/LanguageTool-stable.zip -O /tmp/LanguageTool.zip && \
+    unzip /tmp/LanguageTool.zip -d /app/languagetool && \
+    rm /tmp/LanguageTool.zip
 
 # Copy requirements first for caching
 COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip install --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Cache models during build
 COPY cache_models.py .
@@ -29,26 +35,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-17-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
-COPY --from=builder /root/.cache /root/.cache
+# Copy installed Python packages from builder
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Ensure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Copy LanguageTool installation
+COPY --from=builder /app/languagetool /app/languagetool
 
 # Copy application code
 COPY . .
 
+# Set up cache directories
+RUN mkdir -p /app/cache && \
+    chmod -R 777 /app/cache
+ENV TRANSFORMERS_CACHE=/app/cache/huggingface
+ENV LANGUAGE_TOOL_HOME=/app/languagetool/LanguageTool-5.7
+
 # Create a non-root user
-RUN useradd -m myuser && chown -R myuser /app
+RUN useradd -m myuser && \
+    chown -R myuser:myuser /app && \
+    chmod -R 755 /app
 USER myuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Expose port
 EXPOSE 8080
 
-# Run the application
 CMD ["python", "app.py"]
