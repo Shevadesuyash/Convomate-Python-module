@@ -1,86 +1,92 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 from paragraph_checker import ParagraphCorrector
 from grammar_chatbot import GrammarChatbot
 import logging
 
 app = Flask(__name__)
-CORS(app)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Initialize services
 paragraph_service = ParagraphCorrector()
 chatbot_service = GrammarChatbot()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @app.route('/correct_text', methods=['POST'])
 def handle_paragraph():
+    """Endpoint for conservative paragraph correction"""
     data = request.get_json()
-    text = data.get("paragraph", "")
+    text = data.get('paragraph', '').strip()
 
     if not text:
-        return jsonify({"error": "No text provided"}), 400
+        return jsonify({"error": "No paragraph provided"}), 400
 
     try:
-        conservative = paragraph_service.conservative_correction(text)
-        fluent = paragraph_service.fluent_correction(text)
-
+        corrected = paragraph_service.conservative_correction(text)
         return jsonify({
-            "original": text,
-            "conservative": conservative,
-            "fluent": fluent
+            "original_text": text,
+            "grammar_corrected": corrected
         })
-
     except Exception as e:
-        logger.error(f"Correction error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        logger.error(f"Paragraph correction error: {str(e)}")
+        return jsonify({
+            "error": "Paragraph processing failed",
+            "details": str(e)
+        }), 500
 
-
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['POST', 'GET'])  # Added GET method for testing
 def handle_chat():
-    data = request.get_json()
-    user_input = data.get("question", "")
+    """Endpoint for fluent conversational correction"""
+    if request.method == 'POST':
+        data = request.get_json()
+        user_input = data.get('message', '').strip()
+    else:  # GET method for testing
+        user_input = request.args.get('message', '').strip()
 
     if not user_input:
-        return jsonify({"error": "No input provided"}), 400
+        return jsonify({"error": "No message provided"}), 400
 
     try:
         response = chatbot_service.generate_response(user_input)
         return jsonify({
-            "user_input": user_input,
-            "response": response
+            "original_text": response["original_text"],
+            "corrected_text": response["corrected_text"],
+            "is_corrected": response["is_corrected"],
+            "compliment": response["compliment"],
+            "next_question": response["next_question"],
+            "end_conversation": response["end_conversation"]
         })
-
     except Exception as e:
         logger.error(f"Chatbot error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-
-
-@app.route('/reset', methods=['POST'])
-def reset_conversation():
-    try:
-        chatbot_service.reset_conversation()
-        return jsonify({"message": "Conversation reset successfully"})
-    except Exception as e:
-        logger.error(f"Reset error: {str(e)}")
-        return jsonify({"error": "Failed to reset conversation"}), 500
-
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    try:
-        _ = paragraph_service.conservative_correction("This is a test.")
-        _ = chatbot_service.generate_response("Hello")
         return jsonify({
-            "status": "healthy",
-            "services": ["paragraph", "chat"]
-        })
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+            "error": "Chat processing failed",
+            "details": str(e)
+        }), 500
 
+@app.route('/start', methods=['GET'])
+def start_conversation():
+    try:
+        response = chatbot_service.start_conversation()
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"Start conversation error: {str(e)}")
+        return jsonify({
+            "error": "Failed to start conversation",
+            "details": str(e)
+        }), 500
+
+@app.route('/health', methods=['GET', 'POST'])  # Added POST method for testing
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "services": ["paragraph", "chat"],
+        "details": {
+            "paragraph_service": "active",
+            "chatbot_service": "active"
+        }
+    })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    logger.info("Starting grammar services...")
+    app.run(host='0.0.0.0', port=8080, debug=True)
