@@ -1,57 +1,36 @@
-# app.py
 from flask import Flask, request, jsonify
-from paragraph_checker import correct_paragraph, initialize_models
-import logging
+from paragraph_checker import ParagraphCorrector
 
 app = Flask(__name__)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+corrector = ParagraphCorrector()
 
 @app.route('/correct_text', methods=['POST'])
-def api_correct_text():
+def correct_text():
     data = request.get_json()
-    text = data.get("paragraph", "").strip()
-    aggressive = data.get("aggressive", False)
+
+    # Get paragraph from request (compatible with Spring DTO)
+    text = data.get('paragraph', '').strip()
 
     if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    logger.info(f"Processing text (length: {len(text)}, aggressive: {aggressive})")
+        return jsonify({
+            "error": "No paragraph provided"
+        }), 400
 
     try:
-        # Get fully corrected text
-        fully_corrected = correct_paragraph(text, aggressive=aggressive)
+        # Get correction (using default aggressive=False)
+        corrected = corrector.correct_paragraph(text)
 
-        response = {
+        # Return response matching Spring DTO structure
+        return jsonify({
             "original_text": text,
-            "corrected_text": fully_corrected,
-            "original_length": len(text),
-            "corrected_length": len(fully_corrected)
-        }
-
-        return jsonify(response)
+            "grammar_corrected": corrected  # Changed from "corrected_text"
+        })
 
     except Exception as e:
-        logger.error(f"Error processing text: {str(e)}", exc_info=True)
         return jsonify({
             "error": "An error occurred while processing the text",
             "details": str(e)
         }), 500
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "healthy"})
-
 if __name__ == '__main__':
-    # Initialize models at startup
-    logger.info("Loading ML models...")
-    try:
-        initialize_models()
-        logger.info("Models loaded successfully")
-    except Exception as e:
-        logger.error(f"Error loading models: {str(e)}", exc_info=True)
-        raise e
-
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001)
